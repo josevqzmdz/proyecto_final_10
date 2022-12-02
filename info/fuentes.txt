@@ -1,0 +1,3 @@
+https://github.com/sarahm44/lstm-stock-predictor/blob/main/lstm_stock_predictor_fng.ipynb
+https://github.com/Marcos001/DL-Introduction-CNN
+https://stackoverflow.com/questions/72580800/number-of-digits-in-mnist-data-in-python
