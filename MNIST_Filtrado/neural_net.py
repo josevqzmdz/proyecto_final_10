@@ -13,37 +13,26 @@ from random import randint
 from scipy import misc
 from scipy import special
 import numpy as np
-from show_mnist import *
+from MNIST_Filtrado.Filtrado import Filtrado as filtrado
 import os
 os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
 
-
-# =====================
-#    Initialisation
-# =====================
-
-# Initialisation - Import from MNIST database
-
-START_TIME = time.time()
-ft = gzip.open('data_training', 'rb')
-TRAINING = pickle.load(ft)
-ft.close()
-ft = gzip.open('data_testing', 'rb')
-TESTING = pickle.load(ft)
-ft.close()
-
-print('Import duration '+str(round((time.time() - START_TIME), 2))+'s')
-print('----')
-
-# =====================
-#     Network class
-# =====================
-
-
-class Network:
+class Neural_Net:
+    START_TIME = time.time()
+    ft = gzip.open('data_training', 'rb')
+    TRAINING = pickle.load(ft)
+    ft.close()
+    ft = gzip.open('data_testing', 'rb')
+    TESTING = pickle.load(ft)
+    ft.close()
 
     def __init__(self, num_hidden):
-        e = show_mnist()
+
+        # Initialisation - Import from MNIST database
+
+        print('Import duration ' + str(round((time.time() - self.START_TIME), 2)) + 's')
+        print('----')
+        e = filtrado.show_mnist()
         """
         self.input_size = 784
         self.output_size = 10
@@ -78,7 +67,7 @@ class Network:
                 self.backpropagate(input_vector, target_vector)
             # Messages and backups
             self.iteration += 1.
-            accu = self.accu(TESTING)
+            accu = self.accu(self.TESTING)
             message = 'Iteration '+str(int(self.iteration)).zfill(2) + \
                 ' (' + str(round(time.time()-start_time)).zfill(2)+'s) '
             message += 'Precision G:'+str(accu[1]).zfill(4)+'% Min:'+ \
@@ -135,7 +124,7 @@ class Network:
 
     def sauv(self, file_name=''):
         if file_name == '':
-            file_name = 'nt_'+str(self.accu(TESTING)[0])
+            file_name = 'nt_'+str(self.accu(self.TESTING)[0])
         sauvfile = self.layers
         f = open(file_name, 'wb')
         pickle.dump(sauvfile, f)
@@ -159,79 +148,63 @@ class Network:
         min_c = sorted(range(len(each)), key=lambda k: each[k])[0]
         return np.round([each[min_c]*100, total[0]/total[1]*100, min_c], 2)
 
-nt1=Network(300)
-nt1.train(600,TRAINING)
-
-# =====================
-#   Display fonctions
-# =====================
-
-# Rounding off the prints and scientific notation
-np.set_printoptions(precision=2)
-np.set_printoptions(suppress=True)
+    def find(self, network):
+        x = randint(0, 999)
+        while self.TESTING[1][x] != self:
+            x = randint(0, 10000)
+            self.aff(x, network)
 
 
-def find(c, network):
-    x = randint(0, 999)
-    while TESTING[1][x] != c:
-        x = randint(0, 10000)
-    aff(x, network)
-
-
-def aff(x, network):
-    print('Display character #'+str(x))
-    print('Target = '+str(TESTING[1][x]))
-    char = TESTING[0][x]
-    l = ''
-    for i in range(784):
-        if i % 28 == 0:
-            print(l)
-            l = str(int(round(char[i])))
-        else:
-            l += str(int(round(char[i])))
-    pred = network.predict(char)
-    print('Prediction = ' + str(np.argmax(pred)))
-    print(pred)
-
-
-def err(network):
-    x = randint(0, 10000)
-    while network.predict_one(TESTING[0][x]) == TESTING[1][x]:
-        x = randint(0, 10000)
-    aff(x, network)
-
-
-def test_nn(network):
-    """Test Network"""
-    ok, nb = 0, 10000
-    for k in range(nb):
-        if network.predict_one(TESTING[0][k]) == TESTING[1][k]:
-            ok += 1
-    return round((ok*100./nb), 1)
-
-# =====================
-#     Try with png
-# =====================
-
-def load_png(png):
-    img = misc.imread(png)
-    res = np.zeros(28*28)
-    for i, _ in enumerate(img):
-        for j, px in enumerate(img[i]):
-            res[28*i + j] = str(int(round(abs(px[1]-255)/255.)))
-    return res
-
-
-def aff2(x, *network):
-    char = x
-    l = ''
-    for i in range(784):
-        if i % 28 == 0:
-            print(l)
-            l = str(int(round(char[i])))
-        else:
-            l += str(int(round(char[i])))
-    for nt in network:
-        pred = nt.predict(char)
+    def aff(x, network):
+        print('Display character #'+str(x))
+        print('Target = '+str(x.TESTING[1][x]))
+        char = x.TESTING[0][x]
+        l = ''
+        for i in range(784):
+            if i % 28 == 0:
+                print(l)
+                l = str(int(round(char[i])))
+            else:
+                l += str(int(round(char[i])))
+        pred = network.predict(char)
         print('Prediction = ' + str(np.argmax(pred)))
         print(pred)
+
+
+    def err(network):
+        x = randint(0, 10000)
+        while network.predict_one(network.TESTING[0][x]) == network.TESTING[1][x]:
+            x = randint(0, 10000)
+            network.aff(x, network)
+
+
+    def test_nn(self):
+        """Test Network"""
+        ok, nb = 0, 10000
+        for k in range(nb):
+            if self.network.predict_one(self.TESTING[0][k]) == self.TESTING[1][k]:
+                ok += 1
+        return round((ok*100./nb), 1)
+
+    def load_png(png):
+        img = misc.imread(png)
+        res = np.zeros(28*28)
+        for i, _ in enumerate(img):
+            for j, px in enumerate(img[i]):
+                res[28*i + j] = str(int(round(abs(px[1]-255)/255.)))
+        return res
+
+
+    def aff2(x, *network):
+        char = x
+        l = ''
+        for i in range(784):
+            if i % 28 == 0:
+                print(l)
+                l = str(int(round(char[i])))
+            else:
+                l += str(int(round(char[i])))
+        for nt in network:
+            pred = nt.predict(char)
+            print('Prediction = ' + str(np.argmax(pred)))
+            print(pred)
